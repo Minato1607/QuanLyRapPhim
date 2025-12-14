@@ -16,8 +16,8 @@ public class ThongKe {
         }
 
         System.out.println("====== BAO CAO ======");
-        System.out.println("So ve da ban: " + dsVe.size());
-        System.out.println("Tong doanh thu (uoc tinh): " + tongTien + " VND");
+        System.out.println("Số vé đã bán: " + dsVe.size());
+        System.out.println("Tổng doanh thu (ước tính): " + tongTien + " VND");
         System.out.println("=====================");
     }
 }
