@@ -133,7 +133,7 @@ public class QuanLyPhim {
 
         System.out.print("Nhập Mã Lịch (VD: LC05): ");
         String maLich = sc.nextLine();
-        System.out.print("Nhập Phòng (VD: R01): ");
+        System.out.print("Nhập Phòng (VD: Rạp 01): ");
         String phong = sc.nextLine();
         System.out.print("Nhập Giờ (VD: 19:30): ");
         String gio = sc.nextLine();
@@ -148,7 +148,7 @@ public class QuanLyPhim {
     // ================= CHỨC NĂNG 5: HIỂN THỊ =================
     public void hienThiDanhSach() {
         System.out.println("\n" + "=".repeat(114));
-        System.out.printf("| %-6s | %-35s | %-15s | %-45s |\n", "MA", "TEN PHIM", "TIME", "LICH CHIEU");
+        System.out.printf("| %-6s | %-35s | %-15s | %-45s |\n", "MÃ", "TÊN PHIM", "KHUNG GIỜ", "LỊCH CHIẾU");
         System.out.println("|" + "-".repeat(8) + "|" + "-".repeat(37) + "|" + "-".repeat(17) + "|" + "-".repeat(47) + "|");
 
         for (Phim p : dsPhim) {
