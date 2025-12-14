@@ -1,6 +1,6 @@
-package ChucNangDatVe; // <--- ĐỔI TÊN PACKAGE Ở ĐÂY
+package ChucNangDatVe;
 
-import QuanLyPhimvaLich.QuanLyPhim; // <--- QUAN TRỌNG: Phải import cái này
+import QuanLyPhimvaLich.QuanLyPhim;
 import model.LichChieu;
 import model.Phim;
 import model.Ve;
@@ -8,7 +8,7 @@ import utils.ScannerUtils;
 
 import java.util.List;
 
-public class ChucNangDatVe {
+public class BookingService {
 
     // 1. Hiển thị lịch chiếu
     public void hienThiLichChieu(List<Phim> dsPhim, List<LichChieu> dsLich) {
