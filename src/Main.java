@@ -25,7 +25,7 @@ public class Main {
         QuanLyTaiKhoan qlTaiKhoan = new QuanLyTaiKhoan();
         XuLyPhim xuLyPhim = new XuLyPhim();
         ThongKe thongKe = new ThongKe();
-        BookingService datVePage = new BookingService(); // <--- CHỨC NĂNG MỚI
+        BookingService datVePage = new BookingService();
 
         int luaChon;
         do {
@@ -43,7 +43,7 @@ public class Main {
                     String adUser = ScannerUtils.nhapChuoiKhongRong("User: ");
                     String adPass = ScannerUtils.nhapChuoiKhongRong("Pass: ");
 
-                    // Check cứng hoặc check file users.txt tuỳ bạn
+                    // Check cứng hoặc check file users.txt
                     if (adUser.equals("admin") && adPass.equals("123456")) {
                         System.out.println("👋 Hello Boss!");
                         // Vào menu Admin cũ
@@ -85,7 +85,7 @@ public class Main {
         } while (luaChon != 0);
     }
 
-    // --- MENU CON CHO ADMIN ---
+    // --- MENU CHO ADMIN ---
     public static void menuAdmin(Scanner sc, AdminFunction adminFn, QuanLyPhim ql, ThongKe tk) {
         int chon;
         do {
@@ -103,7 +103,7 @@ public class Main {
         } while (chon != 0);
     }
 
-    // --- MENU CON CHO KHÁCH HÀNG (MỚI) ---
+    // --- MENU CHO KHÁCH HÀNG (MỚI) ---
     public static void menuKhachHang(Scanner sc, QuanLyPhim ql, XuLyPhim xuLy, BookingService datVe) {
         int chon;
         do {
@@ -116,7 +116,6 @@ public class Main {
 
             switch (chon) {
                 case 1:
-                    // Tận dụng code tìm kiếm của Người 5
                     System.out.println("1. Xem tất cả A-Z");
                     System.out.println("2. Tìm theo tên");
                     int k = ScannerUtils.nhapSoNguyen("Chọn: ");
@@ -133,7 +132,6 @@ public class Main {
                     datVe.hienThiLichChieu(ql.getDsPhim(), ql.getDsLichChieu());
                     break;
                 case 3:
-                    // Show lịch trước cho dễ chọn rồi mới mua
                     datVe.hienThiLichChieu(ql.getDsPhim(), ql.getDsLichChieu());
                     datVe.xuLyMuaVe(ql);
                     break;
