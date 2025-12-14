@@ -8,14 +8,22 @@ public class QuanLyTaiKhoan {
 
     public boolean dangKy(String user, String pass) {
         try {
-            // true nghĩa là ghi nối tiếp, không xóa dữ liệu cũ
+            // Tham số 'true' nghĩa là ghi nối tiếp (append), không xóa dữ liệu cũ
             FileWriter fw = new FileWriter(tenFile, true);
-            fw.write(user + "-" + pass + "\n");
+            BufferedWriter bw = new BufferedWriter(fw);
+
+            // Ghi dữ liệu
+            bw.write(user + "-" + pass);
+            bw.newLine(); // <--- QUAN TRỌNG: Lệnh này giúp xuống dòng sạch sẽ
+
+            // Đóng file để lưu ngay lập tức
+            bw.close();
             fw.close();
-            System.out.println("-> Đăng ký thành công!");
+
+            System.out.println("✅ Đăng ký thành công! (Dữ liệu đã được lưu)");
             return true;
         } catch (Exception e) {
-            System.out.println("Lỗi ghi file!");
+            System.out.println("❌ Lỗi ghi file!");
             return false;
         }
     }
