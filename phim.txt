@@ -1,0 +1,6 @@
+P02;Dune: Hanh Tinh Cat;166
+P05;Exhuma: Quat Mo Trung Ma;134
+P04;Godzilla x Kong;115
+P03;Kung Fu Panda 4;94
+P01;Mai;131
+P010;Zootopia 2;108
