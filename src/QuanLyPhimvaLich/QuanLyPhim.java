@@ -1,294 +1,195 @@
 package QuanLyPhimvaLich;
 
-import java.io.*;
+import model.LichChieu;
+import model.Phim;
+import model.Ve;
+import utils.ScannerUtils;
+import data.FileManager;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class QuanLyPhim {
-    private static final String FILE_NAME = "data_quanlyphim.txt"; // Tệp tin văn bản
 
-    private transient AtomicInteger nextPhimId = new AtomicInteger(1);
+    // Danh sách lưu trữ dữ liệu
+    private List<Phim> dsPhim;
+    private List<LichChieu> dsLichChieu;
+    private List<Ve> dsVe; // Danh sách vé để thống kê
 
-    private List<Phim> danhSachPhim;
-    private List<LichChieu> danhSachLichChieu;
+    // Constructor 1: Nhận dữ liệu từ Người 1 (FileManager load lên)
+    public QuanLyPhim(List<Phim> phimLoaded, List<LichChieu> lichLoaded, List<Ve> veLoaded) {
+        this.dsPhim = phimLoaded != null ? phimLoaded : new ArrayList<>();
+        this.dsLichChieu = lichLoaded != null ? lichLoaded : new ArrayList<>();
+        this.dsVe = veLoaded != null ? veLoaded : new ArrayList<>();
+    }
 
+    // Constructor 2: Mặc định (để test khi chưa có file)
     public QuanLyPhim() {
-        this.danhSachPhim = new ArrayList<>();
-        this.danhSachLichChieu = new ArrayList<>();
+        this.dsPhim = new ArrayList<>();
+        this.dsLichChieu = new ArrayList<>();
+        this.dsVe = new ArrayList<>(); // <--- QUAN TRỌNG: Phải khởi tạo cái này
+
+        // Giả lập dữ liệu mẫu
+        dsPhim.add(new Phim("P01", "Mai", 120));
+        dsPhim.add(new Phim("P02", "Dune 2", 165));
+        dsLichChieu.add(new LichChieu("LC01", "P01", "R01", "18:00"));
     }
 
-    // Khởi tạo dữ liệu mẫu cho lần chạy đầu tiên
-    private void khoiTaoDuLieuMau() {
-        if (danhSachPhim.isEmpty()) {
-            Phim p1 = new Phim("01", "Mai", "120p");
-            Phim p2 = new Phim("02", "Dune 2", "166p");
+    // ================= CHỨC NĂNG 1: THÊM PHIM (LƯU LUÔN) =================
+    public void themPhim(Scanner sc) {
+        System.out.println("\n--- THÊM PHIM MỚI ---");
+        // Dùng ScannerUtils cho an toàn (hoặc để sc.nextLine() như cũ nếu chưa đổi)
+        System.out.print("Nhập Mã Phim (VD: P03): ");
+        String id = sc.nextLine();
 
-            danhSachPhim.add(p1);
-            danhSachPhim.add(p2);
-
-            nextPhimId.set(3);
-
-            LichChieu lc1 = new LichChieu(p1);
-            lc1.themGioChieu("18:00");
-            lc1.themGioChieu("20:30");
-
-            LichChieu lc2 = new LichChieu(p2);
-
-            danhSachLichChieu.add(lc1);
-            danhSachLichChieu.add(lc2);
-
-            System.out.println("ℹ️ Đã khởi tạo dữ liệu mẫu.");
-        }
-    }
-
-    // Thiết lập lại ID tự động sau khi đọc file
-    public void setupNextPhimId() {
-        if (danhSachPhim.isEmpty()) {
-            nextPhimId.set(1);
+        if (timPhimTheoId(id) != null) {
+            System.out.println("❌ Mã phim này đã tồn tại!");
             return;
         }
-        int maxId = 0;
-        for (Phim p : danhSachPhim) {
-            try {
-                int id = Integer.parseInt(p.getId());
-                if (id > maxId) {
-                    maxId = id;
+
+        System.out.print("Nhập Tên Phim: ");
+        String ten = sc.nextLine();
+
+        System.out.print("Nhập Thời Lượng (phút): ");
+        int thoiLuong = 0;
+        try {
+            thoiLuong = Integer.parseInt(sc.nextLine());
+        } catch (Exception e) { return; }
+
+        Phim p = new Phim(id, ten, thoiLuong);
+        dsPhim.add(p);
+
+        // --- LƯU NGAY LẬP TỨC ---
+        FileManager.saveToFile("phim.txt", dsPhim);
+
+        System.out.println("✅ Thêm thành công và đã lưu vào file!");
+    }
+
+    // ================= CHỨC NĂNG 2: SỬA PHIM (LƯU LUÔN) =================
+    public void suaPhim(Scanner sc) {
+        System.out.println("\n--- SỬA PHIM ---");
+        System.out.print("Nhập Mã Phim cần sửa: ");
+        String id = sc.nextLine();
+
+        Phim p = timPhimTheoId(id);
+        if (p == null) {
+            System.out.println("❌ Không tìm thấy phim!");
+            return;
+        }
+
+        System.out.println("Đang sửa phim: " + p.getTenPhim());
+        System.out.print("Tên mới (Enter để giữ nguyên): ");
+        String tenMoi = sc.nextLine();
+        if(!tenMoi.isEmpty()) p.setTenPhim(tenMoi);
+
+        System.out.print("Thời lượng mới (Enter để giữ nguyên): ");
+        String tlMoi = sc.nextLine();
+        try {
+            if(!tlMoi.isEmpty()) p.setThoiLuong(Integer.parseInt(tlMoi));
+        } catch(Exception e) {}
+
+        // --- LƯU NGAY LẬP TỨC ---
+        FileManager.saveToFile("phim.txt", dsPhim);
+
+        System.out.println("✅ Đã cập nhật và lưu file.");
+    }
+
+    // ================= CHỨC NĂNG 3: XÓA PHIM (LƯU CẢ PHIM VÀ LỊCH) =================
+    public void xoaPhim(Scanner sc) {
+        System.out.println("\n--- XÓA PHIM ---");
+        System.out.print("Nhập Mã Phim cần xóa: ");
+        String id = sc.nextLine();
+
+        Phim p = timPhimTheoId(id);
+        if (p == null) {
+            System.out.println("❌ Không tìm thấy phim!");
+            return;
+        }
+
+        dsPhim.remove(p);
+        // Xóa luôn lịch chiếu của phim đó
+        dsLichChieu.removeIf(lc -> lc.getMaPhim().equals(id));
+
+        // --- LƯU NGAY LẬP TỨC (Phải lưu cả 2 file vì Xóa Phim ảnh hưởng cả Lịch) ---
+        FileManager.saveToFile("phim.txt", dsPhim);
+        FileManager.saveToFile("lich.txt", dsLichChieu);
+
+        System.out.println("✅ Đã xóa phim và lịch chiếu liên quan (Dữ liệu đã được cập nhật).");
+    }
+
+    // ================= CHỨC NĂNG 4: XẾP LỊCH CHIẾU =================
+    public void xepLichChieu(Scanner sc) {
+        System.out.println("\n--- XẾP LỊCH CHIẾU ---");
+        hienThiDanhSachPhimDonGian();
+
+        System.out.print("Nhập Mã Phim: ");
+        String maPhim = sc.nextLine();
+
+        if (timPhimTheoId(maPhim) == null) {
+            System.out.println("❌ Không tìm thấy phim!");
+            return;
+        }
+
+        System.out.print("Nhập Mã Lịch (VD: LC05): ");
+        String maLich = sc.nextLine();
+        System.out.print("Nhập Phòng (VD: R01): ");
+        String phong = sc.nextLine();
+        System.out.print("Nhập Giờ (VD: 19:30): ");
+        String gio = sc.nextLine();
+
+        LichChieu lc = new LichChieu(maLich, maPhim, phong, gio);
+        dsLichChieu.add(lc);
+        FileManager.saveToFile("lich.txt", dsLichChieu);
+
+        System.out.println("✅ Đã thêm lịch chiếu.");
+    }
+
+    // ================= CHỨC NĂNG 5: HIỂN THỊ =================
+    public void hienThiDanhSach() {
+        System.out.println("\n" + "=".repeat(114));
+        System.out.printf("| %-6s | %-35s | %-15s | %-45s |\n", "MA", "TEN PHIM", "TIME", "LICH CHIEU");
+        System.out.println("|" + "-".repeat(8) + "|" + "-".repeat(37) + "|" + "-".repeat(17) + "|" + "-".repeat(47) + "|");
+
+        for (Phim p : dsPhim) {
+            StringBuilder lichStr = new StringBuilder();
+            for (LichChieu lc : dsLichChieu) {
+                if (lc.getMaPhim().equals(p.getId())) {
+                    lichStr.append("[").append(lc.getPhong()).append("-").append(lc.getGio()).append("] ");
                 }
-            } catch (NumberFormatException ignored) {}
-        }
-        nextPhimId.set(maxId + 1);
-    }
-
-
-    // ==========================================================
-    // --- LƯU DỮ LIỆU (Áp dụng FileWriter/PrintWriter) ---
-    // Định dạng lưu: ID|TenPhim|ThoiLuong|GioChieu1,GioChieu2,...
-    // ==========================================================
-
-    public void luuDuLieu() {
-        // Sử dụng PrintWriter để ghi dữ liệu văn bản vào file hiệu quả hơn
-        try (PrintWriter writer = new PrintWriter(new FileWriter(FILE_NAME))) {
-
-            for (LichChieu lc : danhSachLichChieu) {
-                Phim p = lc.getPhim();
-                String gioChieuStr = String.join(",", lc.getDanhSachGioChieu());
-
-                // Ghi dữ liệu theo định dạng: ID|Tên phim|Thời lượng|Lịch chiếu
-                String line = String.format("%s|%s|%s|%s",
-                        p.getId(),
-                        p.getTenPhim(),
-                        p.getThoiLuong(),
-                        gioChieuStr);
-                writer.println(line);
             }
+            String lichHienThi = lichStr.toString();
+            if (lichHienThi.isEmpty()) lichHienThi = "---";
 
-            System.out.println("✅ Dữ liệu đã được lưu thành công vào file: " + FILE_NAME);
-
-        } catch (IOException i) {
-            System.out.println("❌ Lỗi khi ghi dữ liệu vào tệp tin:");
-            i.printStackTrace();
+            System.out.printf("| %-6s | %-35s | %-15d | %-45s |\n",
+                    p.getId(), p.getTenPhim(), p.getThoiLuong(), lichHienThi);
         }
+        System.out.println("=".repeat(114));
     }
 
-    // ==========================================================
-    // --- ĐỌC DỮ LIỆU (Áp dụng FileReader/BufferedReader) ---
-    // ==========================================================
+    // --- CÁC HÀM GETTER / HỖ TRỢ ---
 
-    public static QuanLyPhim docDuLieu() {
-        QuanLyPhim quanLy = new QuanLyPhim();
-        File file = new File(FILE_NAME);
-
-        if (!file.exists()) {
-            System.out.println("ℹ️  Không tìm thấy file dữ liệu cũ. Khởi tạo dữ liệu mới.");
-            quanLy.khoiTaoDuLieuMau();
-            return quanLy;
-        }
-
-        // Sử dụng BufferedReader để đọc dữ liệu văn bản từ file hiệu quả hơn
-        try (BufferedReader reader = new BufferedReader(new FileReader(FILE_NAME))) {
-
-            String line;
-            while ((line = reader.readLine()) != null) {
-                // Tách các trường dữ liệu bằng dấu '|'
-                String[] parts = line.split("\\|");
-
-                if (parts.length >= 3) {
-                    String id = parts[0];
-                    String tenPhim = parts[1];
-                    String thoiLuong = parts[2];
-                    String gioChieuStr = parts.length > 3 ? parts[3] : "";
-
-                    Phim p = new Phim(id, tenPhim, thoiLuong);
-                    LichChieu lc = new LichChieu(p);
-
-                    // Xử lý lịch chiếu (tách chuỗi bằng dấu ',')
-                    if (!gioChieuStr.isEmpty()) {
-                        String[] gioChieuList = gioChieuStr.split(",");
-                        for (String gio : gioChieuList) {
-                            lc.themGioChieu(gio.trim());
-                        }
-                    }
-
-                    quanLy.danhSachPhim.add(p);
-                    quanLy.danhSachLichChieu.add(lc);
-                }
-            }
-
-            quanLy.setupNextPhimId();
-            System.out.println("✅ Đã tải dữ liệu thành công từ file: " + FILE_NAME);
-            return quanLy;
-
-        } catch (IOException e) {
-            System.out.println("❌ Lỗi I/O khi đọc dữ liệu. Khởi tạo dữ liệu mới.");
-            e.printStackTrace();
-            return new QuanLyPhim();
-        }
+    // Hàm này Main đang cần để thống kê doanh thu
+    public List<Ve> getDsVe() {
+        return dsVe;
     }
-    // ==========================================================
-    // --- CHỨC NĂNG QUẢN LÝ ---
-    // ==========================================================
+
+    public List<Phim> getDsPhim() { return dsPhim; }
+    public List<LichChieu> getDsLichChieu() { return dsLichChieu; }
 
     private Phim timPhimTheoId(String id) {
-        for (Phim p : danhSachPhim) {
-            if (p.getId().equals(id)) {
-                return p;
-            }
+        for (Phim p : dsPhim) {
+            if (p.getId().equalsIgnoreCase(id)) return p;
         }
         return null;
     }
 
-    private LichChieu timLichChieuTheoIdPhim(String id) {
-        for (LichChieu lc : danhSachLichChieu) {
-            if (lc.getPhim().getId().equals(id)) {
-                return lc;
-            }
+    private void hienThiDanhSachPhimDonGian() {
+        System.out.print("DS Phim: ");
+        for(Phim p : dsPhim) {
+            System.out.print("[" + p.getId() + ":" + p.getTenPhim() + "] ");
         }
-        return null;
+        System.out.println();
     }
 
-    public void themPhim(Scanner scanner) {
-        System.out.println("\n--- Thêm QuanLyPhimvaLich.Phim Mới ---");
-        // nextPhimId.getAndIncrement() đảm bảo ID mới nhất
-        String id = String.format("%02d", nextPhimId.getAndIncrement());
-
-        System.out.print("Nhập Tên QuanLyPhimvaLich.Phim: ");
-        scanner.nextLine();
-        String tenPhim = scanner.nextLine();
-
-        System.out.print("Nhập Thời Lượng (ví dụ: 120p): ");
-        String thoiLuong = scanner.nextLine();
-
-        Phim newPhim = new Phim(id, tenPhim, thoiLuong);
-        danhSachPhim.add(newPhim);
-        danhSachLichChieu.add(new LichChieu(newPhim));
-
-        System.out.println("✅ Đã thêm phim: " + tenPhim + " (ID: " + id + ")");
-    }
-
-    public void suaPhim(Scanner scanner) {
-        System.out.println("\n--- Sửa QuanLyPhimvaLich.Phim ---");
-        System.out.print("Nhập ID QuanLyPhimvaLich.Phim cần sửa: ");
-        String idCanSua = scanner.next();
-
-        Phim phim = timPhimTheoId(idCanSua);
-
-        if (phim != null) {
-            System.out.println("Đang sửa phim: " + phim.getTenPhim());
-
-            System.out.print("Nhập Tên QuanLyPhimvaLich.Phim mới (hoặc enter để giữ nguyên): ");
-            scanner.nextLine();
-            String newTen = scanner.nextLine();
-            if (!newTen.isEmpty()) {
-                phim.setTenPhim(newTen);
-            }
-
-            System.out.print("Nhập Thời Lượng mới (hoặc enter để giữ nguyên): ");
-            String newThoiLuong = scanner.nextLine();
-            if (!newThoiLuong.isEmpty()) {
-                phim.setThoiLuong(newThoiLuong);
-            }
-
-            System.out.println("✅ Đã cập nhật phim ID: " + idCanSua);
-        } else {
-            System.out.println("❌ Không tìm thấy phim với ID: " + idCanSua);
-        }
-    }
-
-    public void xoaPhim(Scanner scanner) {
-        System.out.println("\n--- Xóa QuanLyPhimvaLich.Phim ---");
-        System.out.print("Nhập ID QuanLyPhimvaLich.Phim cần xóa: ");
-        String idCanXoa = scanner.next();
-
-        Phim phim = timPhimTheoId(idCanXoa);
-
-        if (phim != null) {
-            danhSachPhim.remove(phim);
-
-            LichChieu lc = timLichChieuTheoIdPhim(idCanXoa);
-            if(lc != null) {
-                danhSachLichChieu.remove(lc);
-            }
-
-            System.out.println("✅ Đã xóa phim: " + phim.getTenPhim() + " (ID: " + idCanXoa + ")");
-        } else {
-            System.out.println("❌ Không tìm thấy phim với ID: " + idCanXoa);
-        }
-    }
-
-    public void xepLichChieu(Scanner scanner) {
-        System.out.println("\n--- Xếp Lịch Chiếu ---");
-        System.out.print("Nhập ID QuanLyPhimvaLich.Phim cần xếp lịch: ");
-        String idPhim = scanner.next();
-
-        Phim phim = timPhimTheoId(idPhim);
-
-        if (phim == null) {
-            System.out.println("❌ Không tìm thấy phim với ID: " + idPhim);
-            return;
-        }
-
-        LichChieu lichChieu = timLichChieuTheoIdPhim(idPhim);
-
-        System.out.println("Đang xếp lịch cho phim: " + phim.getTenPhim());
-        System.out.print("Nhập giờ chiếu mới (ví dụ: 10:00, 14:30). Nhập '0' để dừng: ");
-
-        String gioChieu;
-        while (true) {
-            gioChieu = scanner.next();
-            if (gioChieu.equals("0")) {
-                break;
-            }
-            lichChieu.themGioChieu(gioChieu);
-            System.out.print("Đã thêm. Nhập giờ chiếu tiếp theo (hoặc '0' để dừng): ");
-        }
-
-        System.out.println("✅ Đã cập nhật lịch chiếu cho phim ID: " + idPhim);
-    }
-
-    public void hienThiDanhSach() {
-        System.out.println("\n" + "=".repeat(70));
-        System.out.println("🎬 DANH SÁCH PHIM VÀ LỊCH CHIẾU");
-        System.out.println("=".repeat(70));
-
-        // Header
-        String header = String.format("| %-2s | %-15s | %-10s | %-33s",
-                "ID", "Ten QuanLyPhimvaLich.Phim", "Thoi Luong", "Lich Chieu");
-        String separator = "|" + "-".repeat(4) + "|" + "-".repeat(17) + "|" + "-".repeat(12) + "|" + "-".repeat(34) + "|";
-
-        System.out.println(header);
-        System.out.println(separator);
-
-        if (danhSachLichChieu.isEmpty()) {
-            System.out.println("| " + " ".repeat(66) + " |");
-            System.out.println("| " + " ".repeat(25) + "Chưa có bộ phim nào." + " ".repeat(26) + " |");
-            System.out.println("| " + " ".repeat(66) + " |");
-        } else {
-            for (LichChieu lc : danhSachLichChieu) {
-                System.out.println(lc.toPlaintextRow());
-            }
-        }
-        System.out.println(separator);
-    }
 }
